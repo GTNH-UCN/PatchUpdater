@@ -33,7 +33,7 @@ jobs:
       
       # 4. 发布（publish）项目
       - name: Build (publish)
-        run: dotnet publish ./PatchUpdater/PatchUpdater.csproj -c Release -r win-x64 --self-contained false
+        run: dotnet publish ./PatchUpdater/PatchUpdater.csproj -c Release -r win-x64 --self-contained true
       
       # 5. 使用 softprops/action-gh-release 发布到 GitHub Releases
       - name: Create GitHub Release

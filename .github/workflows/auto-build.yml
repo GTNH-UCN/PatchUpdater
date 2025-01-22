@@ -2,7 +2,7 @@ name: Auto Build
 
 on:
   push:
-    branches: [ "main" ]  # 也可以改成其它分支或使用 ['*'] 表示所有分支
+    branches: [ "master" ]  # 也可以改成其它分支或使用 ['*'] 表示所有分支
   workflow_dispatch:
 
 jobs:

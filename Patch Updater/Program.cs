@@ -5,39 +5,46 @@ namespace Patch_Updater;
 class Program
 {
     private const string RepoUrl = "https://github.com/GTNH-UCN/ClientPatch/releases/download/";
-    private static readonly string TempDownloadPath = Path.Combine(Path.GetTempPath(), "patch.7z");
+    private static readonly string TempDownloadPath = Path.Combine(Path.GetTempPath(), $"patch_{Guid.NewGuid()}.7z");
     private static string? _gameDir;
 
     static async Task Main(string[] args)
     {
         Console.WriteLine("=== GTNH Patch Updater ===");
 
-        // 1. 检测环境变量
-        CheckAndSetGameDir();
-
-        // 2. 获取最新可用补丁
-        string patchUrl = await GetLatestPatchUrl();
-        if (string.IsNullOrEmpty(patchUrl))
+        try
         {
-            Console.WriteLine("未找到可用的补丁文件，程序退出。");
-            return;
-        }
+            // 1. 检测环境变量
+            CheckAndSetGameDir();
 
-        // 3. 下载补丁（使用 aria2）
-        bool downloadSuccess = DownloadPatch(patchUrl);
-        if (!downloadSuccess)
+            // 2. 获取最新可用补丁
+            string patchUrl = await GetLatestPatchUrl();
+            if (string.IsNullOrEmpty(patchUrl))
+            {
+                Console.WriteLine("未找到可用的补丁文件，程序退出。");
+                return;
+            }
+
+            // 3. 下载补丁（使用 aria2）
+            bool downloadSuccess = DownloadPatch(patchUrl, TempDownloadPath);
+            if (!downloadSuccess)
+            {
+                Console.WriteLine("补丁下载失败，程序退出。");
+                return;
+            }
+
+            // 4. 解压覆盖到 GTNHDir
+            ExtractArchive(TempDownloadPath, _gameDir);
+
+            Console.WriteLine("更新完成！按任意键退出...");
+            Console.ReadKey();
+        }
+        finally
         {
-            Console.WriteLine("补丁下载失败，程序退出。");
-            return;
+            // 5. 进程退出前删除临时文件
+            CleanupTemporaryFiles();
         }
-
-        // 4. 解压覆盖到 GTNHDir
-        ExtractArchive(TempDownloadPath, _gameDir);
-
-        Console.WriteLine("更新完成！按任意键退出...");
-        Console.ReadKey();
     }
-
 
     /// <summary>
     /// 检查 GTNHDir 环境变量，如果不存在，则让用户输入并保存。
@@ -96,7 +103,7 @@ class Program
     /// <summary>
     /// 使用 aria2c 下载文件，并正确解析并显示进度条
     /// </summary>
-    private static bool DownloadPatch(string patchUrl)
+    private static bool DownloadPatch(string patchUrl, string downloadPath)
     {
         string aria2Path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets/aria2c.exe");
         if (!File.Exists(aria2Path))
@@ -105,8 +112,8 @@ class Program
             return false;
         }
 
-        string tempFolder = Path.GetTempPath().TrimEnd('\\');
-        string outputFilePath = Path.Combine(tempFolder, "patch.7z");
+        string tempFolder = Path.GetDirectoryName(downloadPath);
+        string fileName = Path.GetFileName(downloadPath);
 
         // 自动获取 Windows 系统代理
         string proxy = GetSystemProxy();
@@ -119,7 +126,7 @@ class Program
 
         // `--summary-interval=1` 每秒刷新进度
         string arguments = $"-x 16 -s 16 --check-certificate=false --enable-color=false --summary-interval=1 " +
-                           $"--dir \"{tempFolder}\" --out patch.7z \"{patchUrl}\"";
+                           $"--dir \"{tempFolder}\" --out \"{fileName}\" \"{patchUrl}\"";
 
         if (!string.IsNullOrEmpty(proxy))
         {
@@ -132,8 +139,8 @@ class Program
             {
                 FileName = aria2Path,
                 Arguments = arguments,
-                RedirectStandardOutput = true, // 监听标准输出
-                RedirectStandardError = true, // 监听错误信息
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             }
@@ -170,7 +177,7 @@ class Program
         process.WaitForExit();
         Console.WriteLine(); // 换行，避免进度条干扰
 
-        if (File.Exists(outputFilePath))
+        if (File.Exists(downloadPath))
         {
             Console.WriteLine("文件已成功下载！");
             return true;
@@ -299,5 +306,24 @@ class Program
         }
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// 删除下载的临时文件，避免占用磁盘空间
+    /// </summary>
+    private static void CleanupTemporaryFiles()
+    {
+        try
+        {
+            if (File.Exists(TempDownloadPath))
+            {
+                File.Delete(TempDownloadPath);
+                Console.WriteLine($"已删除临时文件: {TempDownloadPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[警告] 无法删除临时文件 {TempDownloadPath}: {ex.Message}");
+        }
     }
 }

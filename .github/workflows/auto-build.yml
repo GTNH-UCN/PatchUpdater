@@ -36,7 +36,7 @@ jobs:
         run: dotnet publish ./PatchUpdater/PatchUpdater.csproj -c Release -r win-x64 --self-contained true
 
       - name: List published files
-        run: ls -R bin/Release/net8.0/win-x64/publish
+        run: ls -R bin/Release
       
       # 5. 使用 softprops/action-gh-release 发布到 GitHub Releases
       - name: Create GitHub Release

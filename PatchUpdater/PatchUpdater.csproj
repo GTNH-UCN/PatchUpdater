@@ -6,15 +6,19 @@
         <RootNamespace>Patch_Updater</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <!-- 以下是单文件发布相关配置 -->
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <!-- 可选：启用裁剪减小文件体积 -->
+        <PublishTrimmed>true</PublishTrimmed>
+        <!-- 可选：启用压缩减小文件体积 -->
+        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="Assets\7zr.exe">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="Assets\aria2c.exe">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+        <!-- 将Assets目录下的所有exe作为嵌入式资源 -->
+        <EmbeddedResource Include="Assets\*.exe" />
     </ItemGroup>
 
 </Project>

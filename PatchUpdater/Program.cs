@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 
 namespace Patch_Updater;
 
@@ -6,14 +7,21 @@ class Program
 {
     private const string RepoUrl = "https://github.com/GTNH-UCN/ClientPatch/releases/download/";
     private static readonly string TempDownloadPath = Path.Combine(Path.GetTempPath(), $"patch_{Guid.NewGuid()}.7z");
+    private static readonly string AssetsPath = Path.Combine(AppContext.BaseDirectory, "Assets");
     private static string? _gameDir;
 
     static async Task Main(string[] args)
     {
         Console.WriteLine("=== GTNH PatchUpdater ===");
 
+        // 注册进程退出事件
+        AppDomain.CurrentDomain.ProcessExit += (s, e) => CleanupTemporaryFiles();
+
         try
         {
+            // 需要时释放exe
+            await ExtractExecutablesAsync();
+
             // 1. 检测环境变量
             CheckAndSetGameDir();
 
@@ -353,12 +361,69 @@ class Program
             if (File.Exists(TempDownloadPath))
             {
                 File.Delete(TempDownloadPath);
-                Console.WriteLine($"已删除临时文件: {TempDownloadPath}");
             }
+            if (Directory.Exists(AssetsPath))
+            {
+                File.Delete(Path.Combine(AssetsPath, "7zr.exe"));
+                File.Delete(Path.Combine(AssetsPath, "aria2c.exe"));
+
+                // 文件夹为空则删除
+                if (!Directory.EnumerateFileSystemEntries(AssetsPath).Any())
+                {
+                    Directory.Delete(AssetsPath);
+                    Console.WriteLine($"已删除临时文件夹: {AssetsPath}");
+                }
+            }
+
+            Console.WriteLine("已清理临时文件:");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[警告] 无法删除临时文件 {TempDownloadPath}: {ex.Message}");
+        }
+    }
+
+    private static async Task ExtractExecutablesAsync()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var exeNames = assembly.GetManifestResourceNames()
+            .Where(x => x.EndsWith(".exe"));
+
+        if (!Directory.Exists(AssetsPath))
+        {
+            var directoryInfo = Directory.CreateDirectory(AssetsPath);
+            directoryInfo.Attributes |= FileAttributes.Hidden;
+        }
+
+        foreach (var resourceName in exeNames)
+        {
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null) continue;
+
+            // 正确提取文件名
+            // 资源名称通常格式为: "PatchUpdater.Assets.7zr.exe"
+            string fileName = resourceName.Split('.').TakeLast(2).First() + ".exe";
+            // 或者更安全的方式：
+            // string fileName = Path.GetFileName(resourceName.Replace('.', Path.DirectorySeparatorChar));
+
+            string targetPath = Path.Combine(AssetsPath, fileName);
+
+            // 如果文件已存在且正在使用，等待它释放
+            if (File.Exists(targetPath))
+            {
+                try
+                {
+                    File.Delete(targetPath);
+                }
+                catch (IOException)
+                {
+                    continue;
+                }
+            }
+
+            // 写入文件
+            using var fileStream = File.Create(targetPath);
+            await stream.CopyToAsync(fileStream);
         }
     }
 }

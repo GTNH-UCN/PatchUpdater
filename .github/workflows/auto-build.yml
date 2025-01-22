@@ -14,7 +14,7 @@ jobs:
       - name: Generate Version
         id: genversion
         run: |
-          TimeVersion="$(TZ=Asia/Shanghai date '+%y%m%d%H%M%S')"
+          TimeVersion="$(TZ=Asia/Shanghai date '+%Y.%m.%d-%H.%M.%S')"
           echo "TimeVersion=$TimeVersion" >> $GITHUB_ENV
           echo "Generated version: $TimeVersion"
       
@@ -34,9 +34,6 @@ jobs:
       # 4. 发布（publish）项目
       - name: Build (publish)
         run: dotnet publish ./PatchUpdater/PatchUpdater.csproj -c Release -r win-x64 --self-contained true
-
-      - name: List published files
-        run: ls -R PatchUpdater/bin/Release
       
       # 5. 使用 softprops/action-gh-release 发布到 GitHub Releases
       - name: Create GitHub Release

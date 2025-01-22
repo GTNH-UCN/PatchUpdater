@@ -29,7 +29,7 @@ class Program
             bool downloadSuccess = DownloadPatch(patchUrl, TempDownloadPath);
             if (!downloadSuccess)
             {
-                Console.WriteLine("补丁下载失败。");
+                Console.WriteLine("补丁下载失败，请尝试挂上梯子后再次运行。");
                 return;
             }
 
@@ -86,20 +86,20 @@ class Program
         // 检查现有环境变量是否有效
         if (!IsValidGameDir(_gameDir))
         {
-            string prompt = "未找到有效的游戏目录，请输入游戏安装目录（必须以.minecraft结尾）: ";
+            string prompt = "未找到游戏目录，请输入游戏所在的版本目录（以.minecraft结尾）: ";
             _gameDir = GetValidGameDir(prompt);
             Environment.SetEnvironmentVariable("GTNHDir", _gameDir, EnvironmentVariableTarget.User);
             Console.WriteLine($"已保存 GTNHDir = {_gameDir}");
         }
         else
         {
-            Console.WriteLine($"当前游戏目录: {_gameDir}");
-            Console.Write("是否修改游戏目录？(y/N) (默认为 N): ");
+            Console.WriteLine($"当前版本目录: {_gameDir}");
+            Console.Write("是否修改版本目录？(y/N) (直接回车可跳过): ");
             var input = Console.ReadLine()?.Trim().ToUpper() ?? string.Empty;
 
             if (input == "Y")
             {
-                string prompt = "请输入新的游戏目录（必须以.minecraft结尾）: ";
+                string prompt = "请输入新的版本目录（以.minecraft结尾）: ";
                 _gameDir = GetValidGameDir(prompt);
                 Environment.SetEnvironmentVariable("GTNHDir", _gameDir, EnvironmentVariableTarget.User);
                 Console.WriteLine($"已更新 GTNHDir = {_gameDir}");
@@ -214,12 +214,12 @@ class Program
 
         if (File.Exists(downloadPath))
         {
-            Console.WriteLine("文件已成功下载！");
+            Console.WriteLine("文件已成功下载。");
             return true;
         }
         else
         {
-            Console.WriteLine("下载失败！");
+            Console.WriteLine("下载失败，请尝试挂上梯子后再次运行。");
             return false;
         }
     }

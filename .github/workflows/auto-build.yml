@@ -27,6 +27,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
+          
+      - name: List files
+        run: ls -R
       
       # 4. 发布（publish）项目
       - name: Build (publish)

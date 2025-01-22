@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Patch Updater", "Patch Updater\Patch Updater.csproj", "{E2DACD1C-7193-4C83-A9BA-73A38986753B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatchUpdater", "PatchUpdater\PatchUpdater.csproj", "{E2DACD1C-7193-4C83-A9BA-73A38986753B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
